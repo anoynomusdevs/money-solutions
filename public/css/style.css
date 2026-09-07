@@ -1342,10 +1342,19 @@ input[type="range"]::-webkit-slider-thumb:hover {
   margin-bottom: 50px;
 }
 
-.footer-logo img {
-  height: 42px;
-  width: auto;
+.footer-logo {
+  display: inline-block;
+  background: #ffffff;
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
   margin-bottom: 18px;
+  box-shadow: var(--shadow-sm);
+}
+
+.footer-logo img {
+  height: 38px;
+  width: auto;
+  margin-bottom: 0;
 }
 
 .footer-about {
