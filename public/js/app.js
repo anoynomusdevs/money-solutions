@@ -40,10 +40,22 @@ document.addEventListener('DOMContentLoaded', () => {
     groupMobile.classList.remove('has-error');
   }
 
+  const isDirectMode = document.body.getAttribute('data-mode') === 'direct' ||
+                       window.location.pathname.startsWith('/direct') ||
+                       window.location.search.includes('direct=true');
+
   // Attach click listeners to all "Apply Now" / "Apply for Loan" buttons
   document.querySelectorAll('.open-apply-modal').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.preventDefault();
+
+      // On direct mode: redirect directly to partner URL with no popup and no data collection
+      if (isDirectMode) {
+        window.location.href = BAJAJ_REDIRECT_URL;
+        return;
+      }
+
+      // On standard mode: open lead capture modal
       const loanType = btn.getAttribute('data-loan-type') || 'Personal Loan';
       openModal(loanType);
     });
@@ -54,11 +66,13 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Close when clicking backdrop
-  modalOverlay.addEventListener('click', (e) => {
-    if (e.target === modalOverlay) {
-      closeModal();
-    }
-  });
+  if (modalOverlay) {
+    modalOverlay.addEventListener('click', (e) => {
+      if (e.target === modalOverlay) {
+        closeModal();
+      }
+    });
+  }
 
   // Close on Escape key
   document.addEventListener('keydown', (e) => {
@@ -68,23 +82,28 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Sanitize mobile input: digits only, max 10
-  mobileInput.addEventListener('input', (e) => {
-    e.target.value = e.target.value.replace(/\D/g, '').slice(0, 10);
-    if (e.target.value.length === 10) {
-      groupMobile.classList.remove('has-error');
-    }
-  });
+  if (mobileInput) {
+    mobileInput.addEventListener('input', (e) => {
+      e.target.value = e.target.value.replace(/\D/g, '').slice(0, 10);
+      if (e.target.value.length === 10) {
+        groupMobile.classList.remove('has-error');
+      }
+    });
+  }
 
-  nameInput.addEventListener('input', () => {
-    if (nameInput.value.trim().length > 1) {
-      groupName.classList.remove('has-error');
-    }
-  });
+  if (nameInput) {
+    nameInput.addEventListener('input', () => {
+      if (nameInput.value.trim().length > 1) {
+        groupName.classList.remove('has-error');
+      }
+    });
+  }
 
   // --------------------------------------------------------------------------
   // 2. FORM SUBMISSION & DATABASE PERSISTENCE & REDIRECTION
   // --------------------------------------------------------------------------
-  applyForm.addEventListener('submit', async (e) => {
+  if (applyForm) {
+    applyForm.addEventListener('submit', async (e) => {
     e.preventDefault();
 
     const nameVal = nameInput.value.trim();

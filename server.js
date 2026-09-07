@@ -98,6 +98,11 @@ app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 
+// Direct Apply Route (Instant redirect without data collection)
+app.get('/direct', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'direct.html'));
+});
+
 // Fallback for any other unmatched routes to home page
 app.use((req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
