@@ -103,8 +103,8 @@ app.use((req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Start listening if not running in a serverless function export
-if (process.env.NODE_ENV !== 'test') {
+// Start listening if running as standalone server (not on Vercel)
+if (process.env.NODE_ENV !== 'test' && !process.env.VERCEL) {
   app.listen(PORT, () => {
     console.log(`Money Solutions Server running on http://localhost:${PORT}`);
     console.log(`Admin Dashboard: http://localhost:${PORT}/admin`);
