@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Money Solutions - Leads Admin Portal</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="assets/images/New-Project-4.png" type="image/png">
+  <style>
+    body {
+      background-color: #f1f5f9;
+      padding-bottom: 60px;
+    }
+    .admin-navbar {
+      background: #091d34;
+      color: #ffffff;
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .admin-logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 700;
+      font-size: 1.1rem;
+    }
+    .admin-logo img {
+      height: 36px;
+      filter: brightness(0) invert(1);
+    }
+    .admin-container {
+      max-width: 1240px;
+      margin: 36px auto;
+      padding: 0 20px;
+    }
+    .admin-stats-card {
+      background: #ffffff;
+      border-radius: 14px;
+      padding: 24px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.05);
+      margin-bottom: 24px;
+      border: 1px solid #e2e8f0;
+    }
+    .admin-stat-num {
+      font-size: 2.2rem;
+      font-weight: 800;
+      color: var(--primary);
+    }
+    .admin-stat-label {
+      color: #64748b;
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+    .admin-actions {
+      display: flex;
+      gap: 12px;
+    }
+    .admin-table-card {
+      background: #ffffff;
+      border-radius: 14px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.05);
+      border: 1px solid #e2e8f0;
+      overflow: hidden;
+    }
+    .table-toolbar {
+      padding: 18px 24px;
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+    }
+    .search-box {
+      position: relative;
+      width: 320px;
+    }
+    .search-box input {
+      width: 100%;
+      padding: 10px 14px 10px 38px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      outline: none;
+      font-family: inherit;
+    }
+    .search-box input:focus {
+      border-color: var(--primary);
+    }
+    .search-box svg {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #94a3b8;
+    }
+    .leads-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.9rem;
+    }
+    .leads-table th {
+      background: #f8fafc;
+      padding: 14px 20px;
+      font-weight: 700;
+      color: #475569;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .leads-table td {
+      padding: 16px 20px;
+      border-bottom: 1px solid #f1f5f9;
+      color: #1e293b;
+    }
+    .leads-table tr:hover {
+      background: #fdf2f2;
+    }
+    .badge-loan {
+      background: #fee2e2;
+      color: var(--primary);
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 0.78rem;
+      display: inline-block;
+    }
+    .empty-state {
+      padding: 60px 20px;
+      text-align: center;
+      color: #64748b;
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="admin-navbar">
+    <div class="admin-logo">
+      <img src="assets/images/New-Project-4.png" alt="Money Solutions">
+      <span>Lead Capture Admin Portal</span>
+    </div>
+    <div>
+      <a href="/" class="btn btn-secondary" style="padding: 8px 18px; font-size: 0.85rem; border-color: rgba(255,255,255,0.2); color: #fff; background: transparent;">View Live Site ↗</a>
+    </div>
+  </nav>
+
+  <div class="admin-container">
+    <div class="admin-stats-card">
+      <div>
+        <div class="admin-stat-num" id="totalLeadsCount">0</div>
+        <div class="admin-stat-label">Total Leads Captured (SQLite)</div>
+      </div>
+      <div class="admin-actions">
+        <button class="btn btn-secondary" id="refreshBtn" style="padding: 10px 20px; font-size: 0.9rem;">
+          ↻ Refresh
+        </button>
+        <a href="/api/export-leads" class="btn btn-primary" style="padding: 10px 20px; font-size: 0.9rem;">
+          📥 Download CSV
+        </a>
+      </div>
+    </div>
+
+    <div class="admin-table-card">
+      <div class="table-toolbar">
+        <h3 style="font-size: 1.1rem; color: #0f172a;">Captured Customer Inquiries</h3>
+        <div class="search-box">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <input type="text" id="searchInput" placeholder="Search by name or mobile...">
+        </div>
+      </div>
+
+      <div style="overflow-x: auto;">
+        <table class="leads-table">
+          <thead>
+            <tr>
+              <th>#ID</th>
+              <th>Applicant Name</th>
+              <th>Mobile Number</th>
+              <th>Loan Type</th>
+              <th>Captured Time</th>
+              <th>IP Address</th>
+            </tr>
+          </thead>
+          <tbody id="leadsTableBody">
+            <tr>
+              <td colspan="6" class="empty-state">Loading captured leads...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let allLeads = [];
+
+    async function fetchLeads() {
+      try {
+        const res = await fetch('/api/leads');
+        const data = await res.json();
+        if (data.success) {
+          allLeads = data.leads || [];
+          document.getElementById('totalLeadsCount').textContent = allLeads.length;
+          renderLeads(allLeads);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    function renderLeads(leads) {
+      const tbody = document.getElementById('leadsTableBody');
+      if (!leads.length) {
+        tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No leads captured yet. Submit an application from the home page!</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = leads.map(l => `
+        <tr>
+          <td><strong>#${l.id}</strong></td>
+          <td style="font-weight: 600;">${escapeHtml(l.name)}</td>
+          <td>
+            <a href="tel:+91${l.mobile}" style="color: var(--primary); font-weight: 700;">
+              +91 ${l.mobile}
+            </a>
+          </td>
+          <td><span class="badge-loan">${escapeHtml(l.loan_type || 'Personal Loan')}</span></td>
+          <td style="color: #64748b; font-size: 0.85rem;">${new Date(l.created_at).toLocaleString()}</td>
+          <td style="font-family: monospace; font-size: 0.8rem; color: #94a3b8;">${escapeHtml(l.ip_address || '—')}</td>
+        </tr>
+      `).join('');
+    }
+
+    function escapeHtml(str) {
+      return (str || '').toString().replace(/[&<>"']/g, m => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      })[m]);
+    }
+
+    document.getElementById('searchInput').addEventListener('input', (e) => {
+      const q = e.target.value.toLowerCase().trim();
+      const filtered = allLeads.filter(l =>
+        (l.name && l.name.toLowerCase().includes(q)) ||
+        (l.mobile && l.mobile.includes(q))
+      );
+      renderLeads(filtered);
+    });
+
+    document.getElementById('refreshBtn').addEventListener('click', fetchLeads);
+
+    fetchLeads();
+  </script>
+</body>
+</html>
