@@ -178,6 +178,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }, 500);
     }
   });
+}
 
   // --------------------------------------------------------------------------
   // 3. EMI CALCULATOR
