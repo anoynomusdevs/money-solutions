@@ -3,3 +3,6 @@ node_modules/
 *.log
 leads.db
 leads.db-journal
+.env
+.env.local
+.env.*.local

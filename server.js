@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -6,7 +7,7 @@ const { saveLead, getAllLeads, getLeadsCount } = require('./db');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-const DEFAULT_REDIRECT_URL = 'https://www.bajajfinservmarkets.in/apply-for-personal-loan-finservmarkets/?utm_source=ERefferalAffiliate&utm_medium=SOL&utm_campaign=Open&utm_content=Growthgenius&utm_term=Aug26SC7_';
+const DEFAULT_REDIRECT_URL = process.env.REDIRECT_URL || 'https://www.bajajfinservmarkets.in/apply-for-personal-loan-finservmarkets/?utm_source=ERefferalAffiliate&utm_medium=SOL&utm_campaign=Open&utm_content=Growthgenius&utm_term=Aug26SC7_';
 
 app.use(cors());
 app.use(express.json());
@@ -14,7 +15,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // API endpoint to capture leads
-app.post('/api/apply', (req, res) => {
+app.post('/api/apply', async (req, res) => {
   try {
     const { name, mobile, loan_type, loan_amount, utm_source, utm_medium, utm_campaign, utm_content, utm_term, source_url } = req.body;
 
@@ -30,7 +31,7 @@ app.post('/api/apply', (req, res) => {
     const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || '';
     const userAgent = req.headers['user-agent'] || '';
 
-    const saved = saveLead({
+    const saved = await saveLead({
       name: name.trim(),
       mobile: cleanMobile.slice(-10),
       loan_type: loan_type || 'Personal Loan',
@@ -45,7 +46,7 @@ app.post('/api/apply', (req, res) => {
       user_agent: userAgent
     });
 
-    console.log(`[LEAD SAVED] ID #${saved.id} - ${name} (${cleanMobile})`);
+    console.log(`[LEAD SAVED] ID #${saved.id || 'new'} - ${name} (${cleanMobile})`);
 
     return res.json({
       success: true,
@@ -54,14 +55,14 @@ app.post('/api/apply', (req, res) => {
     });
   } catch (err) {
     console.error('Error saving lead:', err);
-    return res.status(500).json({ success: false, message: 'Internal server error' });
+    return res.status(500).json({ success: false, message: 'Internal server error: ' + err.message });
   }
 });
 
 // API endpoint to retrieve leads
-app.get('/api/leads', (req, res) => {
+app.get('/api/leads', async (req, res) => {
   try {
-    const leads = getAllLeads();
+    const leads = await getAllLeads();
     return res.json({ success: true, count: leads.length, leads });
   } catch (err) {
     return res.status(500).json({ success: false, message: err.message });
@@ -69,9 +70,9 @@ app.get('/api/leads', (req, res) => {
 });
 
 // CSV Export
-app.get('/api/export-leads', (req, res) => {
+app.get('/api/export-leads', async (req, res) => {
   try {
-    const leads = getAllLeads();
+    const leads = await getAllLeads();
     const headers = ['ID', 'Name', 'Mobile', 'Loan Type', 'Loan Amount', 'IP Address', 'Created At'];
     const rows = leads.map(l => [
       l.id,
@@ -102,7 +103,12 @@ app.use((req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-app.listen(PORT, () => {
-  console.log(`Money Solutions Server running on http://localhost:${PORT}`);
-  console.log(`Admin Dashboard: http://localhost:${PORT}/admin`);
-});
+// Start listening if not running in a serverless function export
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(PORT, () => {
+    console.log(`Money Solutions Server running on http://localhost:${PORT}`);
+    console.log(`Admin Dashboard: http://localhost:${PORT}/admin`);
+  });
+}
+
+module.exports = app;

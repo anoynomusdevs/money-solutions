@@ -1,43 +1,22 @@
-const Database = require('better-sqlite3');
-const path = require('path');
+require('dotenv').config();
+const { createClient } = require('@supabase/supabase-js');
 
-const dbPath = path.join(__dirname, 'leads.db');
-const db = new Database(dbPath);
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_KEY;
 
-// Create leads table if not exists
-db.exec(`
-  CREATE TABLE IF NOT EXISTS leads (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    mobile TEXT NOT NULL,
-    loan_type TEXT DEFAULT 'Personal Loan',
-    loan_amount TEXT,
-    source_url TEXT,
-    utm_source TEXT,
-    utm_medium TEXT,
-    utm_campaign TEXT,
-    utm_content TEXT,
-    utm_term TEXT,
-    ip_address TEXT,
-    user_agent TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  )
-`);
+let supabase = null;
 
-const insertLeadStmt = db.prepare(`
-  INSERT INTO leads (
-    name, mobile, loan_type, loan_amount, source_url,
-    utm_source, utm_medium, utm_campaign, utm_content, utm_term,
-    ip_address, user_agent
-  ) VALUES (
-    @name, @mobile, @loan_type, @loan_amount, @source_url,
-    @utm_source, @utm_medium, @utm_campaign, @utm_content, @utm_term,
-    @ip_address, @user_agent
-  )
-`);
+if (supabaseUrl && supabaseKey) {
+  supabase = createClient(supabaseUrl, supabaseKey);
+} else {
+  console.warn('[WARNING] SUPABASE_URL or SUPABASE_KEY not configured. Please set them in your .env file or environment variables.');
+}
 
-function saveLead(leadData) {
-  const result = insertLeadStmt.run({
+// Fallback in-memory cache if Supabase credentials are not yet entered
+const inMemoryLeads = [];
+
+async function saveLead(leadData) {
+  const payload = {
     name: leadData.name || '',
     mobile: leadData.mobile || '',
     loan_type: leadData.loan_type || 'Personal Loan',
@@ -50,20 +29,64 @@ function saveLead(leadData) {
     utm_term: leadData.utm_term || '',
     ip_address: leadData.ip_address || '',
     user_agent: leadData.user_agent || ''
-  });
-  return { id: result.lastInsertRowid, ...leadData };
+  };
+
+  if (!supabase) {
+    console.warn('[DB] Supabase not connected. Saving lead to in-memory fallback.');
+    const mockRecord = { id: inMemoryLeads.length + 1, ...payload, created_at: new Date().toISOString() };
+    inMemoryLeads.unshift(mockRecord);
+    return mockRecord;
+  }
+
+  const { data, error } = await supabase
+    .from('leads')
+    .insert([payload])
+    .select();
+
+  if (error) {
+    console.error('[Supabase Error] insert failed:', error.message);
+    throw new Error(error.message);
+  }
+
+  return data && data[0] ? data[0] : payload;
 }
 
-function getAllLeads() {
-  return db.prepare('SELECT * FROM leads ORDER BY created_at DESC').all();
+async function getAllLeads() {
+  if (!supabase) {
+    return inMemoryLeads;
+  }
+
+  const { data, error } = await supabase
+    .from('leads')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    console.error('[Supabase Error] select failed:', error.message);
+    throw new Error(error.message);
+  }
+
+  return data || [];
 }
 
-function getLeadsCount() {
-  return db.prepare('SELECT COUNT(*) as count FROM leads').get().count;
+async function getLeadsCount() {
+  if (!supabase) {
+    return inMemoryLeads.length;
+  }
+
+  const { count, error } = await supabase
+    .from('leads')
+    .select('*', { count: 'exact', head: true });
+
+  if (error) {
+    console.error('[Supabase Error] count failed:', error.message);
+    return 0;
+  }
+
+  return count || 0;
 }
 
 module.exports = {
-  db,
   saveLead,
   getAllLeads,
   getLeadsCount
